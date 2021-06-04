@@ -9,19 +9,19 @@ HEADERS = ({'User-Agent':
 
 
 def get_price_info(url):
-    page = requests.get(url, headers=HEADERS)
-    soup = BeautifulSoup(page.content, features="lxml")
+    page = requests.get(url)
+    soup = BeautifulSoup(page.text)
+#     soup = BeautifulSoup(page)
 
     try:
-        # title = soup.find(id='productTitle').get_text().strip()
-        # price_str = soup.find(id='priceblock_ourprice').get_text()
-        price_str =soup.find("td", text="TD Comfort Balanced Portfolio").find_next_sibling("td").text
-        print(price_str)
+        input_tag = soup.find(attrs={"name": "lastPrice"})
+        output = input_tag['value']
+        print (output)
     except:
-        return None, None, None
+        return "None, None, None"
 
 if __name__ == '__main__':
-    url = "https://www.td.com/ca/en/asset-management/funds/solutions/portfolio-solutions/comfort-portfolios"
+    url = "https://www.theglobeandmail.com/investing/markets/funds/TDB886.CF/" 
     get_price_info(url)
 
 
