@@ -1,31 +1,57 @@
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
 
+scopes = [
+'https://www.googleapis.com/auth/spreadsheets',
+'https://www.googleapis.com/auth/drive'
+]
+credentials = ServiceAccountCredentials.from_json_keyfile_name(jsonFile, scopes) 
+file = gspread.authorize(credentials) # authenticate the JSON key with gspread
+sheet = file.open("pysheet").sheet1  #open sheet
+data = [['','','','','','','']]
+sheet.insert_rows(data, row=2, value_input_option='RAW')
+sheet.update_cell(2,1,datetime.now().strftime("%d-%m-%Y"))
 
-HEADERS = ({'User-Agent':
-            'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
-            'Accept-Language': 'en-US, en;q=0.5'})
-
-
-def get_price_info(url):
-    page = requests.get(url, headers=HEADERS)
-    soup = BeautifulSoup(page.content, features="lxml")
+def get_price_info(url,x):
+    page = requests.get(url)
+    soup = BeautifulSoup(page.text) 
 
     try:
-        # title = soup.find(id='productTitle').get_text().strip()
-        # price_str = soup.find(id='priceblock_ourprice').get_text()
-        price_str =soup.find("td", text="TD Comfort Balanced Portfolio").find_next_sibling("td").text
-        print(price_str)
+        input_tag = soup.find(attrs={"name": "lastPrice"})
+        output = input_tag['value']
+        print (output)
+        sheet.update_cell(2,x,output)
+    except:
+        return "None, None, None"
+
+def get_yahoo_info(url):
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, features="lxml")
+    values = []
+
+    try:
+        rows = soup.find_all('span')
+        for row in rows:
+            values.append(row.get_text()) 
+        sheet.update_cell(2,4,"\n".join(values[3:6]) )
+        sheet.update_cell(2,5,"\n".join(values[7:10]))
+        sheet.update_cell(2,6,"\n".join(values[11:14]))
+            
     except:
         return None, None, None
-
+    
+    
 if __name__ == '__main__':
-    url = "https://www.td.com/ca/en/asset-management/funds/solutions/portfolio-solutions/comfort-portfolios"
-    get_price_info(url)
+#     url = ""  # change to whatever your url is
 
-
-            # message = price_str
-
-    # with open(datetime.now().strftime("%d-%m-%Y"),"w") as file:
-    #     file.write("test automation " + price_str)
+    get_yahoo_info(url)
+    for x in range(2,3):
+        get_price_info(urlTD,x)     
+        get_price_info(urlRBC,x+1)
+      
+      
+        
